@@ -1,0 +1,76 @@
+{
+    "name": "@datawave-au/fetch-cache-manager",
+    "version": "0.1.0",
+    "description": "Fetch Cache Manager",
+    "author": "Andrei Damian <andreim.damian@gmail.com>",
+    "main": "build/@datawave-au/fetch-cache-manager.min.js",
+    "engines": {
+        "node": ">=14",
+        "yarn": ">=1.15.0"
+    },
+    "files": [
+        "build",
+        "coverage",
+        "src"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DatawaveAu/fetch-cache-manager.git"
+    },
+    "types": "build/",
+    "scripts": {
+        "build": "webpack",
+        ":": "",
+        "ci-cd": "echo '▶ ci-cd' && run-s ci-cd:* && echo '✓ ci-cd'",
+        "ci-cd:test": "run-s test",
+        "ci-cd:build": "cross-env NODE_ENV=production run-s build",
+        "::": "",
+        "test": "jest",
+        "test-watch": "jest --watchAll",
+        "test-full": "jest --coverage=true --collectCoverageFrom=src/**/*.ts",
+        ":::::": "",
+        "watch": "echo '▶ watch' && run-s \"build --watch\"",
+        "prepublishOnly": "run-s ci-cd"
+    },
+    "license": "ISC",
+    "browserslist": [
+        "last 2 Chrome versions",
+        "last 2 ChromeAndroid versions",
+        "last 2 Edge versions",
+        "last 2 Firefox versions",
+        "last 2 iOS versions",
+        "last 2 Safari versions"
+    ],
+    "dependencies": {
+        "@babel/runtime": "^7.5.5",
+        "tslib": "^2.3.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.5.5",
+        "@babel/plugin-proposal-object-rest-spread": "^7.5.5",
+        "@babel/plugin-transform-async-to-generator": "^7.5.0",
+        "@babel/plugin-transform-destructuring": "^7.5.0",
+        "@babel/plugin-transform-runtime": "^7.5.5",
+        "@babel/preset-env": "^7.5.5",
+        "@types/jest": "^27.0.3",
+        "@types/lodash": "^4.14.144",
+        "@typescript-eslint/eslint-plugin": "^5.8.0",
+        "@typescript-eslint/parser": "^5.8.0",
+        "babel-loader": "^8.0.6",
+        "cross-env": "^5.2.0",
+        "eslint": "^8.5.0",
+        "eslint-webpack-plugin": "^3.1.1",
+        "jest": "^27.4.5",
+        "lodash": "^4.17.21",
+        "mkdirp": "^0.5.1",
+        "npm-run-all": "^4.1.5",
+        "rimraf": "^2.6.3",
+        "source-map-loader": "^0.2.4",
+        "ts-jest": "^27.1.2",
+        "ts-loader": "^6.0.4",
+        "ts-node": "^8.3.0",
+        "typescript": "^4.4.4",
+        "webpack": "^5.65.0",
+        "webpack-cli": "^4.9.1"
+    }
+}

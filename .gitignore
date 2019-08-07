@@ -1,0 +1,8 @@
+/coverage/
+/node_modules/
+/reports/
+/tmp/
+/build/
+npm-debug.log
+exposed-version.txt
+yarn-error.log
