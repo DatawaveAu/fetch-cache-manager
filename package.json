@@ -1,6 +1,6 @@
 {
     "name": "@datawave-au/fetch-cache-manager",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Fetch Cache Manager",
     "author": "Andrei Damian <andreim.damian@gmail.com>",
     "main": "build/@datawave-au/fetch-cache-manager.min.js",
@@ -18,6 +18,17 @@
         "url": "https://github.com/DatawaveAu/fetch-cache-manager.git"
     },
     "types": "build/",
+    "keywords": [
+        "cache",
+        "cache-manager",
+        "memcached",
+        "node",
+        "browser",
+        "fetch",
+        "axios",
+        "superagent",
+        "polling"
+    ],
     "scripts": {
         "build": "webpack",
         ":": "",
