@@ -11,7 +11,8 @@
 * [Development](#development)
 
 ## Install
-To install simply run `yarn add @datawave-au/wdu-superagent-cache-manager`.
+### Yarn
+To install simply run `yarn add @datawave-au/fetch-cache-manager` or `npm install @datawave-au/fetch-cache-manager`.
 
 ## Basic Usage
 

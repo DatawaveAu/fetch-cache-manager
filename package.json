@@ -1,6 +1,6 @@
 {
     "name": "@datawave-au/fetch-cache-manager",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Fetch Cache Manager",
     "author": "Andrei Damian <andreim.damian@gmail.com>",
     "main": "build/@datawave-au/fetch-cache-manager.min.js",
