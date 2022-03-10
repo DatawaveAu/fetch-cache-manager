@@ -22,6 +22,13 @@ export interface AsCallback<T> {
     options?: FetchOptions;
 }
 
+interface ProcessStateParams<T> {
+    agent: Agent;
+    cacheItem: CacheItem<T>;
+    frequencyMs: number;
+    force: boolean;
+}
+
 const cacheableMethods: string[] = [ 'GET', 'POST' ];
 
 function buildUrl({ agent, path, queryParams }: BuildUrlParams): string {
@@ -31,12 +38,12 @@ function buildUrl({ agent, path, queryParams }: BuildUrlParams): string {
     return queryParams.length ? `${url}?${queryParamsStr}` : url;
 }
 
-function processState<T>(agent: Agent, cacheItem: CacheItem<T>, frequencyMs: number): void {
+function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateParams<T>): void {
     if(cacheItem.isFetching) {
         return;
     }
 
-    if (!cacheItem.isFetched) {
+    if (!cacheItem.isFetched || force) {
         return run(agent, cacheItem);
     }
 
@@ -77,10 +84,10 @@ export default function asCallback<T>({ agentName, path, options = {}, frequency
 
     manageGarbage(agent);
 
-    const { cacheTtlMs = 0 } = options.cacheOptions ?? {};
+    const { cacheTtlMs = 0, force = false } = options.cacheOptions ?? {};
     const cacheItem = getItem<T>({ cache: agent.cache, key, cacheTtlMs, options: runnerOptions, url });
     cacheItem.callbacks.push({ callback, frequencyMs });
-    processState(agent, cacheItem, frequencyMs);
+    processState({ agent, cacheItem, frequencyMs, force });
     
     return (): void => stopFeed(cacheItem, callback);
 }

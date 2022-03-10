@@ -178,6 +178,14 @@ describe('asCallback', () => {
                     expect(runner).toHaveBeenCalledTimes(0);
                 });
             });
+
+            describe('when force mode is enabled', () => {
+                it('should call the runner', () => {
+                    const callback2 = jest.fn();
+                    asCallback({ agentName, path: 'my/path', callback: callback2, options: { cacheOptions: { force: true } } });
+                    expect(runner).toHaveBeenCalledTimes(1);
+                });
+            });
         });
         describe('when polling', () => {
             it('should make a new request at the requested frequency', () => {
