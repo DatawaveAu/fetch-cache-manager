@@ -1,4 +1,4 @@
-import { Agent } from 'src/js/add-agent';
+import { Agent } from 'src/js/agent/agents';
 import run from '.';
 import { AbortCall, CacheItem, CallbackHandler, FetchOptions } from '../..';
 

@@ -1,4 +1,4 @@
-import { AgentCache } from 'src/js/add-agent';
+import { AgentCache } from 'src/js/agent/add-agent';
 import getItem from '.';
 import { CacheItem, FetchOptions } from '../..';
 

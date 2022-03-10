@@ -1,4 +1,4 @@
-import { Agent } from '../add-agent';
+import { Agent } from '../agent/agents';
 import { isGarbage } from '../cache-item';
 
 export const garbageCollectorFrequency = 9000;

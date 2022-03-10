@@ -1,7 +1,9 @@
 import { GenerateKeyOptionsI } from './generate-key';
-import addAgent from './add-agent';
+import addAgent from './agent/add-agent';
 import asCallback from './as-callback';
 import asPromise from './as-promise';
+import removeAllAgents from './agent/remove-all-agents';
+import removeAgent from './agent/remove-agent';
 
 export type CallbackHandler<T> = (err: Error, res?: CallbackResponse<T>) => void;
 export type AbortCall = () => void;
@@ -37,6 +39,7 @@ export interface FetchOptions {
 
 export interface CacheConfig {
     cacheTtlMs?: number;
+    force?: boolean;
     keyOptions?: GenerateKeyOptionsI;
 }
 
@@ -65,4 +68,6 @@ export default {
     addAgent,
     asPromise,
     asCallback,
+    removeAgent,
+    removeAllAgents,
 };

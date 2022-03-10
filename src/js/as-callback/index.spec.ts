@@ -1,4 +1,5 @@
-import addAgent, { AgentFetchParams, agents } from '../add-agent';
+import addAgent from '../agent/add-agent';
+import { AgentFetchParams, agents } from '../agent/agents';
 import asCallback from '.';
 import { CallbackHandler, Header, QueryParam } from '..';
 import { StopFeedCacheItem } from '../cache-item/stop-feed';

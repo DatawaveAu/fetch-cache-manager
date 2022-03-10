@@ -1,5 +1,6 @@
-import addAgent, { agents } from '.';
+import addAgent  from './index';
 import omit from 'lodash/omit';
+import { agents } from '../agents';
 
 describe('addAgent', () => {
     afterEach(() => {

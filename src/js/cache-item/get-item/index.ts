@@ -1,5 +1,5 @@
 import { CacheItem, RunnerResponse, FetchOptions } from '../..';
-import { AgentCache } from '../../add-agent';
+import { AgentCache } from '../../agent/add-agent';
 import { resolveCallbacks } from '..';
 
 interface CacheItemProps {

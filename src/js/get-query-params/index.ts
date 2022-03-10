@@ -1,5 +1,5 @@
 import { FetchOptions, QueryParam } from '..';
-import { Agent } from '../add-agent';
+import { Agent } from '../agent/agents';
 import uniqBy from 'lodash/uniqBy';
 
 export interface GetQueryParams {

@@ -1,5 +1,5 @@
 import { FetchOptions, Header, QueryParam } from '../';
-import { Agent } from '../add-agent';
+import { Agent } from '../agent/agents';
 import clearUrl from '../clear-url';
 import joinQueryParameters from '../join-query-parameters';
 import joinHeaders from '../join-headers';

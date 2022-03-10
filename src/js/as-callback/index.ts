@@ -1,4 +1,4 @@
-import { agents, Agent } from '../add-agent';
+import { agents, Agent } from '../agent/agents';
 import generateKey from '../generate-key';
 import manageGarbage from '../manage-garbage';
 import { getItem, isExpired, resolveCallbacks, run, stopFeed } from '../cache-item';

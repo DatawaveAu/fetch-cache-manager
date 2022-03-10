@@ -1,6 +1,6 @@
 import generateKey from '.';
 import { FetchOptions } from '..';
-import { Agent } from '../add-agent';
+import { Agent } from '../agent/agents';
 import getQueryParams from '../get-query-params';
 
 describe('generateKey', () => {

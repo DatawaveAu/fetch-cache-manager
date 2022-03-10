@@ -1,4 +1,4 @@
-import { Agent } from '../../add-agent';
+import { Agent } from '../../agent/agents';
 import { CacheItem } from '../..';
 import getLowestFrequency from '../get-lowest-frequency';
 

@@ -1,5 +1,5 @@
 import methods from '.';
-import addAgent from './add-agent';
+import addAgent from './agent/add-agent';
 import asCallback from './as-callback';
 import asPromise from './as-promise';
 

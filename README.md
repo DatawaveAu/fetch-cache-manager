@@ -18,7 +18,7 @@ To install simply run `yarn add @datawave-au/fetch-cache-manager` or `npm instal
 
 ### Creating an agent
 ```javascript
-import { addAgent } from '@datawave/fetch-cache-manager';
+import { addAgent } from '@datawave-au/fetch-cache-manager';
 
 export const AGENT_NAME = 'my-agent';
 
@@ -46,8 +46,8 @@ addAgent({
 
 ### Using as promise
 ```javascript
-import { AGENT_NAME  } from 'agent.js';
-import { asPromise } from '@datawave/fetch-cache-manager';
+import { AGENT_NAME  } from 'agent';
+import { asPromise } from '@datawave-au/fetch-cache-manager';
 
 async function fetchData() {
     try {
@@ -69,8 +69,8 @@ async function fetchData() {
 
 ### Using as callback
 ```javascript
-import { AGENT_NAME  } from 'agent.js';
-import { asCallback } from '@datawave/fetch-cache-manager';
+import { AGENT_NAME  } from 'agent';
+import { asCallback } from '@datawave-au/fetch-cache-manager';
 
 function handleData(error, data) {
     if(error) {
