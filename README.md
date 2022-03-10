@@ -104,6 +104,11 @@ asCallback({agent: AGENT_NAME, path, options, callback: handleData});
 `runner <function>`: A function that runs the api calls for the agent. FCM is meant to be a library agnostic tool, so it's up to the implementer to decide how to actually run the API calls, using this function.
 This function should use the received callback to send either an error or the API response. The function should return an abort controller.
 
+### removeAgent
+`name <string>`: The name of the agent to remove;
+
+### removeAllAgents
+
 ### runner
 `url <string>`: Fully build URL (including query parameters);
 
@@ -136,7 +141,9 @@ This function should use the received callback to send either an error or the AP
 
 `options.cacheOptions.cacheTtlMs <number>`: Cache TTL (in ms) (default: 0)
 
-`options.cacheOptions.keyOptions <objcet>`
+`options.cacheOptions.force <bool>`: Force the request to go through to origin (default: false)
+
+`options.cacheOptions.keyOptions <object>`
 
 `options.cacheOptions.keyOptions.excludeHeaders <array<string>>`: Array of header names to exclude from the cache key generation (default: [])
 
