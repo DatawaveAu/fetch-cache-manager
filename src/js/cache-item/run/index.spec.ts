@@ -50,22 +50,22 @@ describe('run',  () => {
     });
 
     it('should invoke the runner', () => {
-        run(agent, cacheItem);
+        run({ agent, cacheItem });
         expect(runnerSpy).toHaveBeenCalledTimes(1);
         expect(runnerSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ url, options, callback: cacheItem.callback }));
     });
     it('should store the new abort request', () => {
-        run(agent, cacheItem);
+        run({ agent, cacheItem });
         expect(cacheItem.abort).toEqual(abortFn);
     });
     it('should set the request as fetching', () => {
-        run(agent, cacheItem);
+        run({ agent, cacheItem });
         expect(cacheItem.isFetching).toBeTruthy();
     });
     describe('when already running', () => {
         it('should not invoke the runner again', () => {
             cacheItem.isFetching = true;
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(runnerSpy).toHaveBeenCalledTimes(0);
         });
     });
@@ -73,23 +73,23 @@ describe('run',  () => {
         it('should abort the existing request', () => {
             const existingAbort = jest.fn();
             cacheItem.abort = existingAbort;
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(existingAbort).toHaveBeenCalledTimes(1);
         });
     });
     describe('when there are no callback items', () => {
         it('should not run the api call', () => {
             cacheItem.callbacks = [];
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(runnerSpy).toHaveBeenCalledTimes(0);
         });
     });
     describe('when there are no polling calls', () => {
         it('should not start a new timer', () => {
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(setTimeout).toHaveBeenCalledTimes(0);
             cacheItem.callbacks.push({ callback: jest.fn(), frequencyMs: 0 });
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(setTimeout).toHaveBeenCalledTimes(0);
         });
     });
@@ -102,26 +102,26 @@ describe('run',  () => {
 
         it('should start the timer for the next call even if the active request is fetching', () => {
             cacheItem.isFetching = true;
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(setTimeout).toHaveBeenCalledTimes(1);
         });
 
         it('should clear the previous timeout', () => {
             const timeout = setTimeout(jest.fn(), 100);
             cacheItem.nextRefresh = timeout;
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(clearTimeout).toHaveBeenCalledTimes(1);
             expect(clearTimeout).toHaveBeenCalledWith(timeout);
         });
 
         it('should save the next timeout', () => {
-            run(agent, cacheItem);
+            run({ agent, cacheItem });
             expect(cacheItem.nextRefresh).not.toBeNull();
         });
 
         describe('when the timout completes', () => {
             it('should call the run fn again', () => {
-                run(agent, cacheItem);
+                run({ agent, cacheItem });
                 cacheItem.isFetching = false;
                 jest.runOnlyPendingTimers();
                 expect(runnerSpy).toHaveBeenCalledTimes(2);

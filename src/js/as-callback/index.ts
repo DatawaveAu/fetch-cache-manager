@@ -39,24 +39,28 @@ function buildUrl({ agent, path, queryParams }: BuildUrlParams): string {
 }
 
 function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateParams<T>): void {
+    if (force) {
+        return run({ agent, cacheItem, force });
+    }
+
     if(cacheItem.isFetching) {
         return;
     }
 
-    if (!cacheItem.isFetched || force) {
-        return run(agent, cacheItem);
+    if (!cacheItem.isFetched) {
+        return run({ agent, cacheItem, force });
     }
 
     if (!isExpired(cacheItem)) {
         if(frequencyMs > 0 && !cacheItem.nextRefresh) {
-            reRun(agent, cacheItem);
+            reRun({ agent, cacheItem, force });
         }
 
         return resolveCallbacks(cacheItem);
     }
 
     if (!cacheItem.nextRefresh) {
-        return run(agent, cacheItem);
+        return run({ agent, cacheItem, force });
     }
 }
 
