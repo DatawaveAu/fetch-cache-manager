@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-node:
+    name: Test with Typescript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 14
+          - 16
+          - 18
+        typescript:
+          - 4.5
+          - 4.6
+          - 4.7
+          - 4.8
+          - 4.9
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Use Typescript {{ matrix.typescript }}
+        run: yarn add typescript@${{ matrix.typescript }}
+      - name: Test & Build
+        run: yarn ci-cd
