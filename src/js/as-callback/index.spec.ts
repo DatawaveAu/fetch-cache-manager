@@ -138,6 +138,32 @@ describe('asCallback', () => {
                 null,
                 expect.objectContaining({ response: expect.objectContaining({ ...response }), isCacheable: true, expiresInMs: 0 }));
         });
+        it('should not collapse if already fetching with force option', () => {
+            const callback2 = jest.fn();
+            const response = { data: 'test',status: 200 };
+            runner
+                .mockImplementationOnce(({ callback }: AgentFetchParams<string>) => {
+                    const timeoutId = setTimeout(() => callback(null, response), 100);
+                    return () => clearTimeout(timeoutId);
+                })
+                .mockImplementationOnce(({ callback }: AgentFetchParams<string>) => setTimeout(() => callback(null, response), 100));
+            asCallback({ agentName, path: 'my/path', callback, options: { cacheOptions: { force: true } } });
+            expect(runner).toHaveBeenCalledTimes(1);
+            asCallback({ agentName, path: 'my/path', callback: callback2, options: { cacheOptions: { force: true } } });
+            expect(runner).toHaveBeenCalledTimes(2);
+            expect(callback).toHaveBeenCalledTimes(0);
+            expect(callback2).toHaveBeenCalledTimes(0);
+
+            jest.runOnlyPendingTimers();
+            expect(callback).toHaveBeenCalledTimes(1);
+            expect(callback2).toHaveBeenCalledTimes(1);
+            expect(callback).toHaveBeenCalledWith(
+                null,
+                expect.objectContaining({ response: expect.objectContaining({ ...response }), isCacheable: true, expiresInMs: 0 }));
+            expect(callback2).toHaveBeenCalledWith(
+                null,
+                expect.objectContaining({ response: expect.objectContaining({ ...response }), isCacheable: true, expiresInMs: 0 }));
+        });
 
         describe('when cache item is not fetching, but it is fetched', () => {
             beforeEach(() => {
@@ -182,8 +208,11 @@ describe('asCallback', () => {
             describe('when force mode is enabled', () => {
                 it('should call the runner', () => {
                     const callback2 = jest.fn();
+                    const callback3 = jest.fn();
                     asCallback({ agentName, path: 'my/path', callback: callback2, options: { cacheOptions: { force: true } } });
                     expect(runner).toHaveBeenCalledTimes(1);
+                    asCallback({ agentName, path: 'my/path', callback: callback3, options: { cacheOptions: { force: true } } });
+                    expect(runner).toHaveBeenCalledTimes(2);
                 });
             });
         });
