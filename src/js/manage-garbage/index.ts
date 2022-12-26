@@ -2,13 +2,17 @@ import { Agent } from '../agent/agents';
 import { isGarbage } from '../cache-item';
 
 export const garbageCollectorFrequency = 9000;
-export type GarbageAgent = Pick<Agent, 'cache' | 'garbageCollectorTimeout'>;
+export type GarbageAgent = Pick<Agent, 'cache' | 'garbageCollectorTimeout' | 'storage'>;
 
 function runGarbageCollector(agent: GarbageAgent): void {
-    const { cache } = agent;
+    const { cache, storage } = agent;
+
     Object.values(cache)
         .filter(isGarbage)
-        .forEach((cacheItem) => delete cache[cacheItem.key]);
+        .forEach(({ key }) => {
+            delete cache[key];
+            storage?.removeItem(key);
+        });
 
     agent.garbageCollectorTimeout = Object.keys(cache).length
         ? setTimeout(() => runGarbageCollector(agent), garbageCollectorFrequency)
