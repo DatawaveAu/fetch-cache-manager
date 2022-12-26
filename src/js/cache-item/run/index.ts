@@ -23,5 +23,6 @@ export default function run<T>(agent: Pick<Agent, 'runner'>, cacheItem: CacheIte
     if(cacheItem.abort) {
         cacheItem.abort();
     }
+
     cacheItem.abort = agent.runner<T>({ url: cacheItem.url, options: cacheItem.options, callback: cacheItem.callback });
 }

@@ -1,6 +1,6 @@
 import { CacheItem, RunnerResponse, FetchOptions } from '../..';
-import { AgentCache } from '../../agent/add-agent';
 import { resolveCallbacks } from '..';
+import { AgentCache } from '../../cache-provider';
 
 interface CacheItemProps {
     cache: AgentCache;
@@ -10,21 +10,25 @@ interface CacheItemProps {
     options: FetchOptions;
 }
 
-function saveResult<T>(cacheItem: CacheItem<T>, error: Error, response: RunnerResponse<T>): void {
+function getUpdatedResults<T>(cacheItem: CacheItem<T>, error: Error, response: RunnerResponse<T>) {
     cacheItem.abort = null;
     cacheItem.isFetching = false;
     cacheItem.isFetched = true;
     cacheItem.value = response;
     cacheItem.error = error;
     cacheItem.lastUpdate = Date.now();
+
+    return cacheItem;
 }
 
-export default function getItem<T>({ cache, key, cacheTtlMs, options, url }: CacheItemProps): CacheItem<T> {
-    if(!cache[key]) {
+export default async function getItem<T>({ cache, key, cacheTtlMs, options, url }: CacheItemProps) {
+    const cacheItem = await cache.getItem(key);
+
+    if(!cacheItem) {
         const cacheItem: CacheItem<T> = {
             key,
             url,
-            cacheTtlMs: cacheTtlMs,
+            cacheTtlMs,
             callbacks: [],
             lastUpdate: null,
             value: null,
@@ -34,18 +38,18 @@ export default function getItem<T>({ cache, key, cacheTtlMs, options, url }: Cac
             nextRefresh: null,
             options,
             abort: null,
-            callback(error: Error, response: RunnerResponse<T>) {
+            async callback(error: Error, response: RunnerResponse<T>) {
                 if (error?.name === 'AbortError') {
                     return;
                 }
 
-                saveResult(cacheItem, error, response);
-                resolveCallbacks(cacheItem);
+                await cache.setItem(key, getUpdatedResults(cacheItem, error, response));
+                await resolveCallbacks({ key, cache });
             }
         };
 
-        cache[key] = cacheItem;
+        await cache.setItem(key, cacheItem);
     }
 
-    return cache[key];
+    return cache.getItem(key);
 }

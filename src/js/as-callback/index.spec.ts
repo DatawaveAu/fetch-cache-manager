@@ -17,6 +17,8 @@ jest.mock('../cache-item/stop-feed', () => {
     return mockStopFeed;
 });
 
+const flushPromise = () => new Promise(jest.requireActual('timers').setImmediate);
+
 describe('asCallback', () => {
     const agentName = 'test';
     const basePath = 'https://datawave.com.au';
@@ -43,20 +45,21 @@ describe('asCallback', () => {
         mockManageGarbage.mockReset();
         delete agents[agentName];
     });
-    it('should throw if the agent doesn\'t exist', () => {
-        expect(() => asCallback({ agentName: 'bad-name', path: 'my/path', callback })).toThrowError('Agent \'bad-name\' doesn\'t exist');
+    it('should throw if the agent doesn\'t exist', async () => {
+        await expect(() => asCallback({ agentName: 'bad-name', path: 'my/path', callback }))
+            .rejects.toThrowError('Agent \'bad-name\' doesn\'t exist');
     });
-    it('should infer GET as the default request method', () => {
-        asCallback({ agentName, path: 'my/path', callback });
+    it('should infer GET as the default request method', async () => {
+        await asCallback({ agentName, path: 'my/path', callback });
         expect(runner).toHaveBeenCalledTimes(1);
         expect(runner).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ method: 'GET' }) }));
     });
-    it('should correctly build the URL and headers', () => {
+    it('should correctly build the URL and headers', async () => {
         const headers = [ { key: 'header-4', value: 'header-value-4' }, { key: 'header-3', value: 'header-value-3' } ];
         const query = [ { key: 'query-4', value: 'query-value-4' }, { key: 'query-3', value: 'query-value-3' } ];
         const expectedUrl = `${basePath}/my/path?`
             + 'query-4=query-value-4&query-3=query-value-3&query-5=query-value-5&query-2=query-value-2&query-1=query-value-1';
-        asCallback({ agentName, path: 'my/path?query-5=query-value-5', callback, options: { headers, query } });
+        await asCallback({ agentName, path: 'my/path?query-5=query-value-5', callback, options: { headers, query } });
         expect(runner).toHaveBeenCalledTimes(1);
         expect(runner).toHaveBeenCalledWith(expect.objectContaining({
             url: expectedUrl,
@@ -66,9 +69,9 @@ describe('asCallback', () => {
             }),
         }));
     });
-    it('should work without query parameters', () => {
+    it('should work without query parameters', async () => {
         addAgent({ name: 'test-2', basePath, runner });
-        asCallback({ agentName: 'test-2', path: 'my/path', callback });
+        await asCallback({ agentName: 'test-2', path: 'my/path', callback });
         const expectedUrl = `${basePath}/my/path`;
         expect(runner).toHaveBeenCalledTimes(1);
         expect(runner).toHaveBeenCalledWith(expect.objectContaining({
@@ -81,15 +84,15 @@ describe('asCallback', () => {
     });
 
     describe('when using not supported methods', () => {
-        it('should not try to cache the response', () => {
-            asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
-            asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
+        it('should not try to cache the response', async () => {
+            await asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
+            await asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
             expect(runner).toHaveBeenCalledTimes(2);
         });
-        it('should mark the response as not cacheable', () => {
+        it('should mark the response as not cacheable', async () => {
             const response = { data: 'test',status: 200 };
             runner.mockImplementationOnce(({ callback }: AgentFetchParams<string>) => callback(null, response));
-            asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
+            await asCallback({ agentName, path: 'my/path', callback, options: { method: 'PUT' } });
             expect(callback).toHaveBeenCalledTimes(1);
             expect(callback).toHaveBeenCalledWith(
                 null,
@@ -98,37 +101,38 @@ describe('asCallback', () => {
     });
 
     describe('when using supported methods', () => {
-        it('should start the garbage collector', () => {
-            asCallback({ agentName, path: 'my/path', callback });
+        it('should start the garbage collector', async () => {
+            await asCallback({ agentName, path: 'my/path', callback });
             expect(mockManageGarbage).toHaveBeenCalledTimes(1);
             expect(mockManageGarbage).toHaveBeenCalledWith(agents[agentName]);
         });
-        it('should return a function that allows to unsubscribe from the feed', () => {
-            const unsubscribe = asCallback({ agentName, path: 'my/path', callback });
+        it('should return a function that allows to unsubscribe from the feed', async () => {
+            const unsubscribe = await asCallback({ agentName, path: 'my/path', callback });
             unsubscribe();
-            const cacheItem = Object.values(agents[agentName].cache)[0];
+            const cacheItem = (await agents[agentName].cache.getAllValues())[0];
 
             expect(mockStopFeed).toHaveBeenCalledTimes(1);
             expect(mockStopFeed).toHaveBeenCalledWith(cacheItem, callback);
         });
-        it('should return a function that aborts the request if request is active and has no subscribers left', () => {
+        it('should return a function that aborts the request if request is active and has no subscribers left', async () => {
             mockStopFeed.mockImplementationOnce((cacheItem, callbackFn) => stopFeed(cacheItem, callbackFn));
-            const unsubscribe = asCallback({ agentName, path: 'my/path', callback });
+            const unsubscribe = await asCallback({ agentName, path: 'my/path', callback });
             unsubscribe();
             expect(abort).toHaveBeenCalledTimes(1);
         });
-        it('should collapse if already fetching', () => {
+        it('should collapse if already fetching', async () => {
             const callback2 = jest.fn();
             const response = { data: 'test',status: 200 };
             runner.mockImplementationOnce(({ callback }: AgentFetchParams<string>) => setTimeout(() => callback(null, response), 100));
-            asCallback({ agentName, path: 'my/path', callback });
+            await asCallback({ agentName, path: 'my/path', callback });
             expect(runner).toHaveBeenCalledTimes(1);
-            asCallback({ agentName, path: 'my/path', callback: callback2 });
+            await asCallback({ agentName, path: 'my/path', callback: callback2 });
             expect(runner).toHaveBeenCalledTimes(1);
             expect(callback).toHaveBeenCalledTimes(0);
             expect(callback2).toHaveBeenCalledTimes(0);
 
             jest.runOnlyPendingTimers();
+            await flushPromise();
             expect(callback).toHaveBeenCalledTimes(1);
             expect(callback2).toHaveBeenCalledTimes(1);
             expect(callback).toHaveBeenCalledWith(
@@ -140,22 +144,22 @@ describe('asCallback', () => {
         });
 
         describe('when cache item is not fetching, but it is fetched', () => {
-            beforeEach(() => {
-                const response = { data: 'test',status: 200 };
+            beforeEach(async () => {
+                const response = { data: 'test', status: 200 };
                 runner.mockImplementationOnce(({ callback }: AgentFetchParams<string>) => callback(null, response));
-                asCallback({ agentName, path: 'my/path', callback, options: { cacheOptions: { cacheTtlMs: 5000 } } });
+                await asCallback({ agentName, path: 'my/path', callback, options: { cacheOptions: { cacheTtlMs: 5000 } } });
                 runner.mockReset();
             });
-            it('should resolve with the cached value if cache is valid', () => {
+            it('should resolve with the cached value if cache is valid', async () => {
                 const callback2 = jest.fn();
-                asCallback({ agentName, path: 'my/path', callback: callback2 });
+                await asCallback({ agentName, path: 'my/path', callback: callback2 });
                 expect(runner).toHaveBeenCalledTimes(0);
                 expect(callback2).toHaveBeenCalledTimes(1);
                 expect(setTimeout).toHaveBeenCalledTimes(0);
             });
-            it('should start the runner if not already running and polling is requested', () => {
+            it('should start the runner if not already running and polling is requested', async () => {
                 const callback2 = jest.fn();
-                asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
+                await asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
                 expect(runner).toHaveBeenCalledTimes(0);
                 expect(callback2).toHaveBeenCalledTimes(1);
                 expect(setTimeout).toHaveBeenCalledTimes(1);
@@ -163,35 +167,35 @@ describe('asCallback', () => {
             });
 
             describe('when cache is expired', () => {
-                it('should call the runner', () => {
+                it.only('should call the runner', async () => {
                     jest.advanceTimersByTime(5001);
                     const callback2 = jest.fn();
-                    asCallback({ agentName, path: 'my/path', callback: callback2 });
+                    await asCallback({ agentName, path: 'my/path', callback: callback2 });
                     expect(runner).toHaveBeenCalledTimes(1);
                 });
-                it('should not call the runner if the cache is already polling', () => {
+                it('should not call the runner if the cache is already polling', async () => {
                     const callback2 = jest.fn();
-                    asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 10000 });
+                    await asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 10000 });
                     runner.mockReset();
                     jest.advanceTimersByTime(5001);
-                    asCallback({ agentName, path: 'my/path', callback: jest.fn() });
+                    await asCallback({ agentName, path: 'my/path', callback: jest.fn() });
                     expect(runner).toHaveBeenCalledTimes(0);
                 });
             });
 
             describe('when force mode is enabled', () => {
-                it('should call the runner', () => {
+                it('should call the runner', async () => {
                     const callback2 = jest.fn();
-                    asCallback({ agentName, path: 'my/path', callback: callback2, options: { cacheOptions: { force: true } } });
+                    await asCallback({ agentName, path: 'my/path', callback: callback2, options: { cacheOptions: { force: true } } });
                     expect(runner).toHaveBeenCalledTimes(1);
                 });
             });
         });
         describe('when polling', () => {
-            it('should make a new request at the requested frequency', () => {
+            it('should make a new request at the requested frequency', async () => {
                 const response = { data: 'test', status: 200 };
                 runner.mockImplementation(({ callback }: AgentFetchParams<string>) => callback(null, response));
-                asCallback({ agentName, path: 'my/path', callback, frequencyMs: 200 });
+                await asCallback({ agentName, path: 'my/path', callback, frequencyMs: 200 });
                 expect(runner).toHaveBeenCalledTimes(1);
                 expect(callback).toHaveBeenCalledTimes(1);
                 jest.advanceTimersByTime(199);
@@ -207,14 +211,14 @@ describe('asCallback', () => {
                 expect(runner).toHaveBeenCalledTimes(3);
                 expect(callback).toHaveBeenCalledTimes(3);
             });
-            it('should use the lowest frequency when multiple frequencies are requested', () => {
+            it('should use the lowest frequency when multiple frequencies are requested', async () => {
                 const callback2 = jest.fn();
                 const callback3 = jest.fn();
                 const response = { data: 'test', status: 200 };
                 runner.mockImplementation(({ callback }: AgentFetchParams<string>) => setTimeout(() => callback(null, response), 1));
-                asCallback({ agentName, path: 'my/path', callback, frequencyMs: 200 });
-                asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
-                asCallback({ agentName, path: 'my/path', callback: callback3, frequencyMs: 400 });
+                await asCallback({ agentName, path: 'my/path', callback, frequencyMs: 200 });
+                await asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
+                await asCallback({ agentName, path: 'my/path', callback: callback3, frequencyMs: 400 });
                 expect(runner).toHaveBeenCalledTimes(1);
                 expect(callback).toHaveBeenCalledTimes(0);
                 expect(callback2).toHaveBeenCalledTimes(0);
@@ -257,15 +261,15 @@ describe('asCallback', () => {
                 expect(callback2).toHaveBeenCalledTimes(3);
                 expect(callback3).toHaveBeenCalledTimes(3);
             });
-            it('should always make a request even when the cache is still valid, after the initial request', () => {
+            it('should always make a request even when the cache is still valid, after the initial request', async () => {
                 const callback2 = jest.fn();
                 const response = { data: 'test', status: 200 };
                 runner.mockImplementation(({ callback }: AgentFetchParams<string>) => setTimeout(() => callback(null, response), 1));
-                asCallback({ agentName, path: 'my/path', callback, options: { cacheOptions: { cacheTtlMs: 10000 } } });
+                await asCallback({ agentName, path: 'my/path', callback, options: { cacheOptions: { cacheTtlMs: 10000 } } });
                 jest.advanceTimersByTime(1);
                 expect(runner).toHaveBeenCalledTimes(1);
                 jest.advanceTimersByTime(1);
-                asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
+                await asCallback({ agentName, path: 'my/path', callback: callback2, frequencyMs: 100 });
                 jest.advanceTimersByTime(1);
                 expect(runner).toHaveBeenCalledTimes(1);
                 jest.advanceTimersByTime(98);

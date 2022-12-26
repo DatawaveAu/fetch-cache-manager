@@ -5,7 +5,7 @@ import asPromise from './as-promise';
 import removeAllAgents from './agent/remove-all-agents';
 import removeAgent from './agent/remove-agent';
 
-export type CallbackHandler<T> = (err: Error, res?: CallbackResponse<T>) => void;
+export type CallbackHandler<T> = (err: Error, res?: CallbackResponse<T>) => Promise<void>;
 export type AbortCall = () => void;
 
 export interface RunnerResponse<T> {
@@ -56,7 +56,7 @@ export interface CacheItem<T> {
     nextRefresh: ReturnType<typeof setTimeout>;
     options: FetchOptions;
     abort: AbortCall;
-    callback: (error: Error, response: RunnerResponse<T>) => void;
+    callback: (error: Error, response: RunnerResponse<T>) => Promise<void>;
 }
 
 export interface CallbackRecord<T> {

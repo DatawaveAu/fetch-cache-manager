@@ -1,7 +1,7 @@
 import { agents, Agent } from '../agent/agents';
 import generateKey from '../generate-key';
 import manageGarbage from '../manage-garbage';
-import { getItem, isExpired, resolveCallbacks, run, stopFeed } from '../cache-item';
+import { getItem, resolveCallbacks, run, stopFeed } from '../cache-item';
 import { CacheItem, CallbackHandler, FetchOptions, QueryParam } from '..';
 import clearUrl from '../clear-url';
 import joinQueryParameters from '../join-query-parameters';
@@ -38,7 +38,7 @@ function buildUrl({ agent, path, queryParams }: BuildUrlParams): string {
     return queryParams.length ? `${url}?${queryParamsStr}` : url;
 }
 
-function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateParams<T>): void {
+async function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateParams<T>) {
     if(cacheItem.isFetching) {
         return;
     }
@@ -47,12 +47,12 @@ function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateP
         return run(agent, cacheItem);
     }
 
-    if (!isExpired(cacheItem)) {
+    if (!(await agent.cache.isExpired(cacheItem.key))) {
         if(frequencyMs > 0 && !cacheItem.nextRefresh) {
             reRun(agent, cacheItem);
         }
 
-        return resolveCallbacks(cacheItem);
+        return await resolveCallbacks({ key: cacheItem.key, cache: agent.cache });
     }
 
     if (!cacheItem.nextRefresh) {
@@ -60,8 +60,9 @@ function processState<T>({ agent, cacheItem, frequencyMs, force }: ProcessStateP
     }
 }
 
-export default function asCallback<T>({ agentName, path, options = {}, frequencyMs = 0, callback }: AsCallback<T>): () => void {
+export default async function asCallback<T>({ agentName, path, options = {}, frequencyMs = 0, callback }: AsCallback<T>) {
     const agent = agents[agentName];
+
     if(!agent) {
         throw new Error(`Agent '${agentName}' doesn't exist`);
     }
@@ -79,15 +80,15 @@ export default function asCallback<T>({ agentName, path, options = {}, frequency
 
     if(!cacheableMethods.includes(method)) {
         return agent.runner<T>({ url, options: runnerOptions, callback:
-                (err, res) => callback(err, { response: res, isCacheable: false, expiresInMs: 0 }) });
+                async (err, res) => await callback(err, { response: res, isCacheable: false, expiresInMs: 0 }) });
     }
 
     manageGarbage(agent);
 
     const { cacheTtlMs = 0, force = false } = options.cacheOptions ?? {};
-    const cacheItem = getItem<T>({ cache: agent.cache, key, cacheTtlMs, options: runnerOptions, url });
+    const cacheItem = await getItem<T>({ cache: agent.cache, key, cacheTtlMs, options: runnerOptions, url });
     cacheItem.callbacks.push({ callback, frequencyMs });
-    processState({ agent, cacheItem, frequencyMs, force });
-    
+    await processState({ agent, cacheItem, frequencyMs, force });
+
     return (): void => stopFeed(cacheItem, callback);
 }
