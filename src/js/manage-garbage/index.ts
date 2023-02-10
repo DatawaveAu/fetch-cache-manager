@@ -4,13 +4,16 @@ import { isGarbage } from '../cache-item';
 export const garbageCollectorFrequency = 9000;
 export type GarbageAgent = Pick<Agent, 'cache' | 'garbageCollectorTimeout'>;
 
-function runGarbageCollector(agent: GarbageAgent): void {
+async function runGarbageCollector(agent: GarbageAgent) {
     const { cache } = agent;
-    Object.values(cache)
-        .filter(isGarbage)
-        .forEach((cacheItem) => delete cache[cacheItem.key]);
 
-    agent.garbageCollectorTimeout = Object.keys(cache).length
+    const cacheValues = await cache.getAllValues();
+
+    await Promise.all(cacheValues.map(async ({ key }) => (await isGarbage({ key, cache })) && cache.deleteItem(key)));
+
+    const cacheKeys = await cache.getAllKeys();
+
+    agent.garbageCollectorTimeout = cacheKeys.length
         ? setTimeout(() => runGarbageCollector(agent), garbageCollectorFrequency)
         : null;
 }

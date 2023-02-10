@@ -1,12 +1,19 @@
-import { CacheItem } from '../..';
-import expiresIn from '../expires-in';
+import { AgentCache } from '../../cache-provider';
 
-export default function resolveCallbacks<T>(cacheItem: CacheItem<T>): void {
-    const { value, error } = cacheItem;
-    const expiresInMs = expiresIn(cacheItem);
-    const toRun = cacheItem.callbacks;
+interface ResolveCallbacksParams {
+    key: string;
+    cache: AgentCache
+}
 
-    cacheItem.callbacks = cacheItem.callbacks.slice().filter(({ frequencyMs }) => frequencyMs);
+export default async function resolveCallbacks({ key, cache }: ResolveCallbacksParams) {
+    const cacheItem = await cache.getItem(key);
+    const { value, error, callbacks } = cacheItem;
+    const expiresInMs = await cache.expiresIn(key);
+    const toRun = callbacks;
+
+    cacheItem.callbacks = callbacks.slice().filter(({ frequencyMs }) => frequencyMs);
+
+    await cache.setItem(key, cacheItem);
 
     toRun.forEach(({ callback }) => callback(error, {
         response: value,

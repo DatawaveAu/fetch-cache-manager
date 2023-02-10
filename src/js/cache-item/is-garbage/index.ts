@@ -1,6 +1,13 @@
-import { CacheItem } from '../..';
-import isExpired from '../is-expired';
+import { AgentCache } from '../../cache-provider';
 
-export default function isGarbage<T>(cacheItem: Pick<CacheItem<T>, 'callbacks' | 'isFetching' | 'cacheTtlMs' | 'lastUpdate'>): boolean {
-    return isExpired(cacheItem) && !cacheItem.isFetching && !cacheItem.callbacks.length;
+interface IsGarbageParams {
+    key: string;
+    cache: AgentCache;
+}
+
+export default async function isGarbage({ key, cache }: IsGarbageParams) {
+    const isExpired = await cache.isExpired(key);
+    const { isFetching, callbacks } = await cache.getItem(key);
+
+    return isExpired && !isFetching && !callbacks.length;
 }

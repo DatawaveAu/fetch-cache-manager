@@ -1,4 +1,4 @@
-import { AgentCache } from 'src/js/agent/add-agent';
+import { AgentCache, InMemoryCache } from '../../cache-provider';
 import getItem from '.';
 import { CacheItem, FetchOptions } from '../..';
 
@@ -6,7 +6,7 @@ describe('getItem',  () => {
     let cache: AgentCache, cacheTtlMs: number, key: string, url: string, options: FetchOptions;
     beforeEach(() =>  {
         jest.useFakeTimers();
-        cache = {};
+        cache = new InMemoryCache();
         cacheTtlMs = 100;
         key = 'key';
         url = 'url/path';
@@ -18,8 +18,8 @@ describe('getItem',  () => {
     });
 
     describe('when there is no item under the requested key', () => {
-        it('should create a new item and add it to the cache', () => {
-            const item = getItem({ cache, cacheTtlMs, key, options, url });
+        it('should create a new item and add it to the cache', async () => {
+            const item = await getItem({ cache, cacheTtlMs, key, options, url });
 
             expect(item).toEqual(expect.objectContaining({
                 key,
@@ -36,24 +36,26 @@ describe('getItem',  () => {
                 abort: null,
                 callback: expect.any(Function),
             }));
-            expect(cache[key]).toEqual(item);
+
+            await expect(cache.getItem(key)).resolves.toEqual(item);
         });
     });
 
     describe('when there is an item under the requested key', () => {
-        it('should return that item', () => {
-            const item = getItem({ cache, cacheTtlMs, key, options, url });
-            const item2 = getItem({ cache, cacheTtlMs, key, options, url });
+        it('should return that item', async () => {
+            const item = await getItem({ cache, cacheTtlMs, key, options, url });
+            const item2 = await getItem({ cache, cacheTtlMs, key, options, url });
 
             expect(item).toEqual(item2);
         });
     });
 
     describe('when the item callback is called', () => {
-        let item: CacheItem<string>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let item: CacheItem<any>;
 
-        beforeEach(() => {
-            item = getItem({ cache, cacheTtlMs, key, options, url });
+        beforeEach(async () => {
+            item = await getItem({ cache, cacheTtlMs, key, options, url });
         });
 
         it('should save the response data to the cache', () => {
@@ -83,13 +85,13 @@ describe('getItem',  () => {
             expect(item.lastUpdate).toBeNull();
         });
 
-        it('should resolve all queued callbacks', () => {
+        it('should resolve all queued callbacks', async () => {
             const mock1 = jest.fn();
             const mock2 = jest.fn();
             const data = { data: 'testData', status: 200 };
 
             item.callbacks.push({ callback: mock1 }, { callback: mock2 });
-            item.callback(null, data);
+            await item.callback(null, data);
 
             expect(mock1.mock.calls).toHaveLength(1);
             expect(mock1.mock.calls[0][0]).toEqual(null);
@@ -107,13 +109,13 @@ describe('getItem',  () => {
             }));
         });
 
-        it('should should filter out callbacks with nullish frequencies', () => {
+        it('should should filter out callbacks with nullish frequencies', async() => {
             const mock = jest.fn();
             const data = { data: 'testData', status: 200 };
             const toKeep = { callback: mock, frequencyMs: 1000 };
 
             item.callbacks.push(toKeep, { callback: mock }, { callback: mock, frequencyMs: 0 });
-            item.callback(null, data);
+            await item.callback(null, data);
 
             expect(item.callbacks).toHaveLength(1);
             expect(item.callbacks[0]).toEqual(toKeep);
