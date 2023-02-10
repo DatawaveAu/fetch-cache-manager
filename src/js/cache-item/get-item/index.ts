@@ -1,9 +1,10 @@
 import { CacheItem, RunnerResponse, FetchOptions } from '../..';
-import { AgentCache } from '../../agent/add-agent';
+import { AgentCache, AgentCacheStorage } from '../../agent/add-agent';
 import { resolveCallbacks } from '..';
 
 interface CacheItemProps {
     cache: AgentCache;
+    storage?: AgentCacheStorage;
     key: string;
     url: string;
     cacheTtlMs: number;
@@ -19,12 +20,12 @@ function saveResult<T>(cacheItem: CacheItem<T>, error: Error, response: RunnerRe
     cacheItem.lastUpdate = Date.now();
 }
 
-export default function getItem<T>({ cache, key, cacheTtlMs, options, url }: CacheItemProps): CacheItem<T> {
+export default function getItem<T>({ cache, storage, key, cacheTtlMs, options, url }: CacheItemProps): CacheItem<T> {
     if(!cache[key]) {
         const cacheItem: CacheItem<T> = {
             key,
             url,
-            cacheTtlMs: cacheTtlMs,
+            cacheTtlMs,
             callbacks: [],
             lastUpdate: null,
             value: null,
@@ -40,6 +41,7 @@ export default function getItem<T>({ cache, key, cacheTtlMs, options, url }: Cac
                 }
 
                 saveResult(cacheItem, error, response);
+                storage?.setItem(key, cacheItem);
                 resolveCallbacks(cacheItem);
             }
         };

@@ -85,9 +85,9 @@ export default function asCallback<T>({ agentName, path, options = {}, frequency
     manageGarbage(agent);
 
     const { cacheTtlMs = 0, force = false } = options.cacheOptions ?? {};
-    const cacheItem = getItem<T>({ cache: agent.cache, key, cacheTtlMs, options: runnerOptions, url });
+    const cacheItem = getItem<T>({ cache: agent.cache, storage: agent.storage, key, cacheTtlMs, options: runnerOptions, url });
     cacheItem.callbacks.push({ callback, frequencyMs });
     processState({ agent, cacheItem, frequencyMs, force });
-    
+
     return (): void => stopFeed(cacheItem, callback);
 }
